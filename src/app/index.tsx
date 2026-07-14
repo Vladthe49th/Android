@@ -1,353 +1,171 @@
 import { useState } from "react";
-import {
-  Button,
-  Image,
-  ImageSourcePropType,
-  SafeAreaView,
-  SectionList,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-
-import { Picker } from "@react-native-picker/picker";
-
-interface Character {
-  id: string;
-  name: string;
-  class: string;
-  power: number;
-  image: ImageSourcePropType;
-}
-
-const images = {
-  homelander: require("../../assets/images/homelander.jpg"),
-  maeve: require("../../assets/images/maeve.jpg"),
-  starlight: require("../../assets/images/starlight.jpg"),
-  deep: require("../../assets/images/deep.jpg"),
-  butcher: require("../../assets/images/butcher.jpg"),
-  hughie: require("../../assets/images/hughie.jpg"),
-  kimiko: require("../../assets/images/kimiko.jpg"),
-  soldierboy: require("../../assets/images/soldierboy.jpg"),
-};
-
-const initialCharacters: Character[] = [
-  {
-    id: "1",
-    name: "Homelander",
-    class: "The Seven",
-    power: 100,
-    image: images.homelander,
-  },
-  {
-    id: "2",
-    name: "Queen Maeve",
-    class: "The Seven",
-    power: 90,
-    image: images.maeve,
-  },
-  {
-    id: "3",
-    name: "Starlight",
-    class: "The Seven",
-    power: 75,
-    image: images.starlight,
-  },
-  {
-    id: "4",
-    name: "The Deep",
-    class: "The Seven",
-    power: 45,
-    image: images.deep,
-  },
-  {
-    id: "5",
-    name: "Billy Butcher",
-    class: "The Boys",
-    power: 92,
-    image: images.butcher,
-  },
-  {
-    id: "6",
-    name: "Hughie Campbell",
-    class: "The Boys",
-    power: 35,
-    image: images.hughie,
-  },
-  {
-    id: "7",
-    name: "Kimiko",
-    class: "The Boys",
-    power: 88,
-    image: images.kimiko,
-  },
-  {
-    id: "8",
-    name: "Soldier Boy",
-    class: "Supes",
-    power: 97,
-    image: images.soldierboy,
-  },
-];
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Sound from "react-native-sound";
+import Video from "react-native-video";
 
 export default function Index() {
-  const [characters, setCharacters] = useState(initialCharacters);
+  const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState("");
+  const [progress, setProgress] = useState(0);
 
-  const [heroClass, setHeroClass] = useState("The Seven");
+  const [showVideo, setShowVideo] = useState(false);
 
-  const [power, setPower] = useState("");
-
-  const [selectedImage, setSelectedImage] =
-    useState<keyof typeof images>("homelander");
-
-  const addCharacter = () => {
-    if (!name.trim() || !power.trim()) {
-      return;
-    }
-
-    const newCharacter: Character = {
-      id: Date.now().toString(),
-      name,
-      class: heroClass,
-      power: Number(power),
-      image: images[selectedImage],
-    };
-
-    setCharacters((prev) => [...prev, newCharacter]);
-
-    setName("");
-    setPower("");
-    setHeroClass("The Seven");
-    setSelectedImage("homelander");
-  };
-
-  const classOrder = ["The Seven", "The Boys", "Supes"];
-
-  const sections = Object.values(
-    characters.reduce(
-      (groups, character) => {
-        if (!groups[character.class]) {
-          groups[character.class] = {
-            title: character.class,
-            data: [],
-          };
+  const playSuccessSound = () => {
+    const successSound = new Sound(
+      "../../assets/success.mp3",
+      Sound.MAIN_BUNDLE,
+      (error) => {
+        if (error) {
+          console.log("Не вдалося завантажити звук:", error);
+          return;
         }
 
-        groups[character.class].data.push(character);
+        successSound.play((success) => {
+          if (!success) {
+            console.log("Помилка під час відтворення звуку.");
+          }
 
-        return groups;
+          successSound.release();
+        });
       },
-      {} as Record<string, { title: string; data: Character[] }>,
-    ),
-  ).sort((a, b) => classOrder.indexOf(a.title) - classOrder.indexOf(b.title));
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>The Boys Character Database</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Демонстрація відеоплеєра</Text>
 
-        <Text style={styles.headerSubtitle}>Vought International Registry</Text>
-      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => {
+          setLoading(true);
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Character Name</Text>
+          setProgress(0);
 
-        <TextInput
-          style={styles.input}
-          placeholder="Enter name..."
-          value={name}
-          onChangeText={setName}
-        />
+          const interval = setInterval(() => {
+            setProgress((previous) => {
+              if (previous >= 100) {
+                clearInterval(interval);
 
-        <Text style={styles.label}>Power Level</Text>
+                setLoading(false);
 
-        <TextInput
-          style={styles.input}
-          placeholder="Enter power..."
-          keyboardType="numeric"
-          value={power}
-          onChangeText={setPower}
-        />
+                playSuccessSound();
 
-        <Text style={styles.label}>Character Class</Text>
+                setShowVideo(true);
 
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={heroClass}
-            onValueChange={(value) => setHeroClass(value)}
-          >
-            <Picker.Item label="The Seven" value="The Seven" />
+                return 100;
+              }
 
-            <Picker.Item label="The Boys" value="The Boys" />
+              return previous + 1;
+            });
+          }, 40);
+        }}
+      >
+        <Text style={styles.buttonText}>Включити відео</Text>
+      </TouchableOpacity>
 
-            <Picker.Item label="Supes" value="Supes" />
-          </Picker>
+      {loading && (
+        <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${progress}%`,
+              },
+            ]}
+          />
         </View>
+      )}
 
-        <Text style={styles.label}>Character Image</Text>
+      {loading && (
+        <Text style={styles.progressText}>Завантаження... {progress}%</Text>
+      )}
 
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedImage}
-            onValueChange={(value) => setSelectedImage(value)}
-          >
-            <Picker.Item label="Homelander" value="homelander" />
-
-            <Picker.Item label="Queen Maeve" value="maeve" />
-
-            <Picker.Item label="Starlight" value="starlight" />
-
-            <Picker.Item label="The Deep" value="deep" />
-
-            <Picker.Item label="Billy Butcher" value="butcher" />
-
-            <Picker.Item label="Hughie" value="hughie" />
-
-            <Picker.Item label="Kimiko" value="kimiko" />
-
-            <Picker.Item label="Soldier Boy" value="soldierboy" />
-          </Picker>
-        </View>
-
-        <Button title="Add Character" onPress={addCharacter} />
-      </View>
-
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        renderSectionHeader={({ section }) => (
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-        )}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={item.image} style={styles.image} />
-
-            <Text style={styles.name}>{item.name}</Text>
-
-            <Text>Class: {item.class}</Text>
-
-            <Text style={styles.power}>⚡ Power: {item.power}</Text>
-          </View>
-        )}
-      />
-    </SafeAreaView>
+      {showVideo && (
+        <Video
+          source={require("../../assets/video.mp4")}
+          style={styles.video}
+          resizeMode="contain"
+          controls={true}
+          paused={false}
+          repeat={false}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f1f1f1",
-  },
+    backgroundColor: "#f2f2f2",
 
-  header: {
-    backgroundColor: "#111",
-    padding: 20,
-    marginBottom: 15,
+    justifyContent: "center",
     alignItems: "center",
+
+    padding: 20,
   },
 
-  headerTitle: {
-    color: "#fff",
-    fontSize: 24,
+  title: {
+    fontSize: 28,
     fontWeight: "bold",
-    textAlign: "center",
+
+    marginBottom: 50,
   },
 
-  headerSubtitle: {
-    color: "#aaa",
-    fontSize: 14,
-    marginTop: 5,
-  },
+  button: {
+    backgroundColor: "#1976D2",
 
-  form: {
-    backgroundColor: "#fff",
-    marginHorizontal: 15,
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 15,
+    paddingVertical: 16,
+    paddingHorizontal: 35,
 
-    elevation: 3,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-  },
-
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 5,
-    marginTop: 10,
-  },
-
-  input: {
-    height: 45,
-    borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 10,
-    paddingHorizontal: 12,
-    backgroundColor: "#fafafa",
+
+    elevation: 5,
   },
 
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    marginBottom: 10,
+  buttonText: {
+    color: "white",
+
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+
+  progressContainer: {
+    width: "90%",
+
+    height: 20,
+
+    backgroundColor: "#d9d9d9",
+
+    borderRadius: 12,
+
+    marginTop: 35,
+
     overflow: "hidden",
   },
 
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginLeft: 15,
-    marginTop: 10,
-    marginBottom: 10,
-    color: "#222",
+  progressFill: {
+    height: "100%",
+
+    backgroundColor: "#4CAF50",
   },
 
-  card: {
-    backgroundColor: "#fff",
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 18,
-    overflow: "hidden",
-
-    elevation: 4,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-  },
-
-  image: {
-    width: "100%",
-    height: 230,
-  },
-
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
+  progressText: {
     marginTop: 12,
-    marginHorizontal: 15,
+
+    fontSize: 18,
+
+    fontWeight: "600",
   },
 
-  power: {
-    color: "#d32f2f",
-    fontSize: 18,
-    fontWeight: "700",
-    margin: 15,
+  video: {
+    width: 340,
+
+    height: 220,
+
+    marginTop: 35,
+
+    borderRadius: 12,
   },
 });
