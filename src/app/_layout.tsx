@@ -1,12 +1,36 @@
-import * as SplashScreen from "expo-splash-screen";
-
 import { Drawer } from "expo-router/drawer";
 
-SplashScreen.preventAutoHideAsync();
+import CustomDrawer from "../components/CustomDrawer";
 
 export default function RootLayout() {
   return (
-    <Drawer>
+    <Drawer
+      drawerContent={(props) => <CustomDrawer {...props} />}
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: "#5D8CB8",
+        },
+
+        headerTintColor: "#fff",
+
+        headerTitleStyle: {
+          fontWeight: "bold",
+        },
+
+        drawerStyle: {
+          width: 290,
+        },
+
+        drawerActiveTintColor: "#5D8CB8",
+
+        drawerInactiveTintColor: "#444",
+
+        drawerLabelStyle: {
+          fontSize: 16,
+          marginLeft: -10,
+        },
+      }}
+    >
       <Drawer.Screen
         name="index"
         options={{
@@ -29,21 +53,4 @@ export default function RootLayout() {
       />
     </Drawer>
   );
-
-    headerStyle: {
-      backgroundColor: "#5D8CB8",
-    },
-
-    headerTintColor: "#fff",
-
-    headerTitleStyle: {
-      fontWeight: "bold",
-    },
-
-    drawerActiveTintColor: "#5D8CB8",
-
-    drawerLabelStyle: {
-      fontSize: 16,
-    },
-  }}
-></Drawer>;
+}
